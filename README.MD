@@ -76,6 +76,11 @@ There are some important arguments for the script you should consider when runni
 
 ## IV. Predict Process
 
+```bash
+python predict.py --test-data ${link_to_test_data}
+```
+
+## V. Result and Comparision
 
 **FIXME**
 
@@ -107,8 +112,6 @@ Epoch 8/10
 
 Your comments about these results <--- **FIXME**
 
-## V. Result and Comparision
-
 
 ## VI. Running Test
 
@@ -116,6 +119,8 @@ When you want to modify the model, you need to run the test to make sure your ch
 
 In the `./folder-name` **(FIXME)** folder please run:
 
-
+```bash
+pytest
+```
 
 
