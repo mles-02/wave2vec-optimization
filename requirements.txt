@@ -8,4 +8,5 @@ soundfile
 jiwer 
 accelerate 
 pyctcdecode==v0.1.0
-https://github.com/kpu/kenlm/archive/master.zip
+fastapi
+onnx

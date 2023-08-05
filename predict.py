@@ -1,24 +1,36 @@
-import os
-from argparse import ArgumentParser
+from os import getenv
+from fastapi import FastAPI, HTTPException, File, UploadFile
+from transformers import Wav2Vec2Processor
+import onnxruntime as rt
+import soundfile as sf
+import numpy as np
 
-if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument("--batch-size", default=64, type=int)
-    parser.add_argument("--epochs", default=1000, type=int)
+processor = Wav2Vec2Processor.from_pretrained("ccoreilly/wav2vec2-large-100k-voxpopuli-catala")
 
-    # FIXME
-    args = parser.parse_args()
+ONNX_PATH = getenv("model_path", "wav2vec2.onnx")
+sess_options = rt.SessionOptions()
+sess_options.graph_optimization_level = rt.GraphOptimizationLevel.ORT_ENABLE_ALL
+session = rt.InferenceSession(ONNX_PATH, sess_options)
 
-    # FIXME
-    # Project Description
+def predict(file):
+  speech_array, sr = sf.read(file)
+  features = processor(speech_array, sampling_rate=16000, return_tensors="pt")
+  input_values = features.input_values
+  onnx_outputs = session.run(None, {session.get_inputs()[0].name: input_values.numpy()})[0]
+  prediction = np.argmax(onnx_outputs, axis=-1)
+  return processor.decode(prediction.squeeze().tolist())
 
-    print('---------------------Welcome to ${name}-------------------')
-    print('Github: ${accout}')
-    print('Email: ${email}')
-    print('---------------------------------------------------------------------')
-    print('Training ${name} model with hyper-params:') # FIXME
-    print('===========================')
+app = FastAPI()
 
-    # FIXME
-    # Do Training
+@app.get('/health')
+async def health_check():
+    return 'OK'
 
+@app.post('/recognize')
+async def recognize(file: UploadFile = File(..., media_type="audio/wav")):
+    if file:
+      return {
+        "text": predict(file.file)
+      }
+    else:
+        raise HTTPException(status_code=400, detail="Audio bytes expected")
