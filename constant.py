@@ -1,2 +1,0 @@
-# Define constant variables
-

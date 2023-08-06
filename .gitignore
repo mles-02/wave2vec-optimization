@@ -3,6 +3,9 @@
 /checkpoints
 /.env
 /__pycache__
+
 *.wav
 *.mp3
 *.m4a
+*.onnx
+*.pt

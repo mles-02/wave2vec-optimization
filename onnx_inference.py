@@ -1,13 +1,12 @@
-from os import getenv
-from fastapi import FastAPI, HTTPException, File, UploadFile
 from transformers import Wav2Vec2Processor
 import onnxruntime as rt
 import soundfile as sf
 import numpy as np
 
-processor = Wav2Vec2Processor.from_pretrained("ccoreilly/wav2vec2-large-100k-voxpopuli-catala")
+ONNX_PATH = ".\checkpoints\wav2vec.onnx"
 
-ONNX_PATH = getenv("model_path", "wav2vec2.onnx")
+processor = Wav2Vec2Processor.from_pretrained(".\checkpoints")
+
 sess_options = rt.SessionOptions()
 sess_options.graph_optimization_level = rt.GraphOptimizationLevel.ORT_ENABLE_ALL
 session = rt.InferenceSession(ONNX_PATH, sess_options)
@@ -16,21 +15,9 @@ def predict(file):
   speech_array, sr = sf.read(file)
   features = processor(speech_array, sampling_rate=16000, return_tensors="pt")
   input_values = features.input_values
+  print(features.input_values.shape)
   onnx_outputs = session.run(None, {session.get_inputs()[0].name: input_values.numpy()})[0]
+  print("output", onnx_outputs.shape)
   prediction = np.argmax(onnx_outputs, axis=-1)
   return processor.decode(prediction.squeeze().tolist())
-
-app = FastAPI()
-
-@app.get('/health')
-async def health_check():
-    return 'OK'
-
-@app.post('/recognize')
-async def recognize(file: UploadFile = File(..., media_type="audio/wav")):
-    if file:
-      return {
-        "text": predict(file.file)
-      }
-    else:
-        raise HTTPException(status_code=400, detail="Audio bytes expected")
+print(predict(".\data\\audio\\0a6e9afe-da46-4e91-a0b0-f50e4521e421.wav"))
