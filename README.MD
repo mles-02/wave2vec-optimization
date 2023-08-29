@@ -1,126 +1,66 @@
-# Project Name <--- FIXME
+# Wav2vec 2.0 Optimization for ASR
 
-Library Logo <--- **FIXME**
+## Problem
+
+The wav2vec 2.0 model is large (92M parameters) and requires a significant amount of resources. The objective is to minimize the model size, enhance inference speed, and deploy it on a cloud platform as a Speech-to-text service.
+
+Slide: [Slide](https://docs.google.com/presentation/d/1kLO7xbmlKoVaSZ_CKj4vxgLf87qUTPYV/edit?usp=sharing&ouid=103656059777475246614&rtpof=true&sd=true)
+
+Architecture Image
 
 <p align="center">
-    <img src='https://storage.googleapis.com/protonx-cloud-storage/transformer/protonx-transf.png' width=200 class="center">
+    <img src='https://drive.google.com/file/d/1DDTJNzhKLF94ihwbW3q9fGzrPjfslkcf/view?usp=sharing' width=1000 class="center">
 </p>
 
-Description about your project. Why do you choose to build this?  <--- **FIXME**
+## Complete Tasks
 
-Slide about your project (if it's available) <--- **FIXME**
+- Implemented model knowledge distillation (from 92M to 52M parameters) and converted the model to ONNX to achieve x2 faster inference while retain a moderate accuracy.
 
-Architecture Image <--- **FIXME**
+- Utilized the Triton server backend to host the model on GCP. The setup involved storing the Docker container in the Container Registry and the model in Cloud Storage, creating an Instance Group from a Template, configuring Load Balancing, and enabling Auto Scaling.
 
-
-Authors:
-- Github: members github name <--- **FIXME**
-- Email: members emails <--- **FIXME**
-
-Advisors:
-- Github: advisor github name <--- **FIXME**
-- Email: advisor emails <--- **FIXME**
-
-## I.  Set up environment
-- Step 1: <--- **FIXME**
-
-```python
-conda env create -f environment.yml
-```
-
-- Step 2: <--- **FIXME**
-```
-
-```
-
-- Step 3: <--- **FIXME**
-
-```
-
-``` 
-
-## II.  Set up your dataset
-
-- Guide user how to download your data and set the data pipeline <--- **FIXME**
-- References: [NLP](https://github.com/bangoc123/transformer) and [CV](https://github.com/bangoc123/mlp-mixer)
-
-## III. Training Process
-
-
-**FIXME**
-
-Training script:
-
-
-```python
-
-python train.py --epochs ${epochs} --input-lang en --target-lang vi --input-path ${path_to_en_text_file} --target-path ${path_to_vi_text_file}
-
-```
-**FIXME**
-
-Example:
-
-```python
-
-!python train.py --train-folder ${train_folder} --valid-folder ${valid_folder} --num-classes 2 --patch-size 5 --image-size 150 --lr 0.0001 --epochs 200 --num-heads 12 
-
-``` 
-**FIXME**
-
-There are some important arguments for the script you should consider when running it:
-
-- `train-folder`: The folder of training data
-- `valid-folder`: The folder of validation data
-- ...
-
-## IV. Predict Process
+## I.  Docker triton server
 
 ```bash
-python predict.py --test-data ${link_to_test_data}
+docker run --rm -p 8000:8000 -p 8001:8001 -p 8002:8002 -v ${PWD}/model_repository:/models nvcr.io/nvidia/tritonserver:23.05-py3 tritonserver --model-repository=/models
 ```
 
-## V. Result and Comparision
-
-**FIXME**
-
-Your implementation
-```
-Epoch 7/10
-782/782 [==============================] - 261s 334ms/step - loss: 0.8315 - acc: 0.8565 - val_loss: 0.8357 - val_acc: 0.7978
-Epoch 8/10
-782/782 [==============================] - 261s 334ms/step - loss: 0.3182 - acc: 0.8930 - val_loss: 0.6161 - val_acc: 0.8047
-Epoch 9/10
-782/782 [==============================] - 261s 333ms/step - loss: 1.1965 - acc: 0.8946 - val_loss: 3.9842 - val_acc: 0.7855
-Epoch 10/10
-782/782 [==============================] - 261s 333ms/step - loss: 0.4717 - acc: 0.8878 - val_loss: 0.4894 - val_acc: 0.8262
-
-```
-
-**FIXME**
-
-Other architecture
-
-```
-Epoch 6/10
-391/391 [==============================] - 115s 292ms/step - loss: 0.1999 - acc: 0.9277 - val_loss: 0.4719 - val_acc: 0.8130
-Epoch 7/10
-391/391 [==============================] - 114s 291ms/step - loss: 0.1526 - acc: 0.9494 - val_loss: 0.5224 - val_acc: 0.8318
-Epoch 8/10
-391/391 [==============================] - 115s 293ms/step - loss: 0.1441 - acc: 0.9513 - val_loss: 0.5811 - val_acc: 0.7875
-```
-
-Your comments about these results <--- **FIXME**
-
-
-## VI. Running Test
-
-When you want to modify the model, you need to run the test to make sure your change does not affect the whole system.
-
-In the `./folder-name` **(FIXME)** folder please run:
+## II.  Docker triton client
 
 ```bash
-pytest
+docker build -t triton-client:v1 ./client
+docker run -it --net=host -v ${PWD}:/workspace/ triton-client:v1
+python client.py
+
+# for performance analytic
+perf_analyzer -m wav2vec -u 34.160.133.47:80 --concurrency-range 1:4 --shape input:1,8000
 ```
 
+## III.  Results
 
+Server performance test
+
+4 CPU
+```bash
+Inferences/Second vs. Client Average Batch Latency
+Concurrency: 1, throughput: 3.26647 infer/sec, latency 303771 usec
+Concurrency: 2, throughput: 6.44571 infer/sec, latency 308146 usec
+Concurrency: 3, throughput: 9.8324 infer/sec, latency 304842 usec
+Concurrency: 4, throughput: 12.693 infer/sec, latency 314371 usec
+```
+
+1 GPU Tesla T4
+```bash
+Inferences/Second vs. Client Average Batch Latency
+Concurrency: 1, throughput: 4.05259 infer/sec, latency 247329 usec
+Concurrency: 2, throughput: 8.1353 infer/sec, latency 246981 usec
+Concurrency: 3, throughput: 12.1179 infer/sec, latency 247838 usec
+Concurrency: 4, throughput: 16.1339 infer/sec, latency 248269 usec
+```
+
+# References
+
+Authors: Huy Nguyen
+- Github: Huy1711
+- Email: nguyenduchuy1711@gmail.com
+
+Advisors: Ba Ngoc
