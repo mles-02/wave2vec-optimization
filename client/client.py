@@ -9,7 +9,10 @@ from transformers import Wav2Vec2Processor
 from pyctcdecode import Alphabet, BeamSearchDecoderCTC, LanguageModel
 
 
-LM_DIR = "../checkpoints/"
+SERVER_URL = "34.160.12.19:80"
+MODEL_DIR = "../checkpoints"
+LM_DIR = "../checkpoints/lm_4.arpa"
+AUDIO_FILE = "../data/audio/0a1d75c4-f578-4042-9e6b-b550f7a95d3a.wav"
 
 def get_decoder_ngram_model(tokenizer, ngram_lm_path):
     vocab_dict = tokenizer.get_vocab()
@@ -36,14 +39,12 @@ def preprocess(file, processor):
 
 if __name__ == "__main__":
 
-  processor = Wav2Vec2Processor.from_pretrained("../checkpoints")
-  lm_file = os.path.join(LM_DIR, "lm_4.arpa")
-  ngram_lm_model = get_decoder_ngram_model(processor.tokenizer, lm_file)
-  audio_path = "../data/audio/0a1d75c4-f578-4042-9e6b-b550f7a95d3a.wav"
-  input_audio = preprocess(audio_path, processor)
+  processor = Wav2Vec2Processor.from_pretrained(MODEL_DIR)
+  ngram_lm_model = get_decoder_ngram_model(processor.tokenizer, LM_DIR)
+  input_audio = preprocess(AUDIO_FILE, processor)
 
   # Setting up client
-  client = httpclient.InferenceServerClient(url="34.124.237.129:8000")
+  client = httpclient.InferenceServerClient(url=SERVER_URL)
 
   inputs = httpclient.InferInput("input", input_audio.shape, datatype="FP32")
   inputs.set_data_from_numpy(input_audio)

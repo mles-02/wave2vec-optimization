@@ -9,7 +9,7 @@ processor = Wav2Vec2Processor.from_pretrained(".\checkpoints")
 
 sess_options = rt.SessionOptions()
 sess_options.graph_optimization_level = rt.GraphOptimizationLevel.ORT_ENABLE_ALL
-session = rt.InferenceSession(ONNX_PATH, sess_options)
+session = rt.InferenceSession(ONNX_PATH, sess_options, providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
 
 def predict(file):
   speech_array, sr = sf.read(file)

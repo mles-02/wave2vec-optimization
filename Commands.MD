@@ -30,3 +30,10 @@ docker run -it --net=host -v ${PWD}:/workspace/ nvcr.io/nvidia/tritonserver:23.0
 pip install transformers[torch] soundfile
 python client.py
 ```
+
+## Docker triton client
+```
+docker run -it --net=host -v ${PWD}:/workspace/ triton-client:v2
+
+perf_analyzer -m wav2vec -u 34.160.133.47:80 --concurrency-range 1:4 --shape input:1,8000
+```
