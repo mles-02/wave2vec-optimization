@@ -8,9 +8,7 @@ Slide: [Slide](https://docs.google.com/presentation/d/1kLO7xbmlKoVaSZ_CKj4vxgLf8
 
 Architecture Image
 
-<p align="center">
-    <img src='https://drive.google.com/file/d/1DDTJNzhKLF94ihwbW3q9fGzrPjfslkcf/view?usp=sharing' width=1000 class="center">
-</p>
+![Architecture image](https://github.com/mles-02/wave2vec-optimization/images/asr.PNG?raw=true)
 
 ## Complete Tasks
 
