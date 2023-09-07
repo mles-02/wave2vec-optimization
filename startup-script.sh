@@ -1,8 +1,6 @@
-	
+#! /bin/bash
 TRITON_CONTAINER_DIR="asia.gcr.io/protonx-asr/triton-asr-v1:23.05-py3"
 MODEL_REPOSITORY_DIR="gs://protonx-wav2vec/model_repository"
-
-#! /bin/bash
 cd /home
 sudo snap install docker
 sudo snap start docker
